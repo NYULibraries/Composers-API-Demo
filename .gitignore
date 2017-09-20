@@ -1,0 +1,4 @@
+conf/application.conf
+target/*
+project/project/*
+project/target/*

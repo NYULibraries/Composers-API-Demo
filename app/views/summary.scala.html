@@ -1,0 +1,23 @@
+@(summary: Summary, dos: Vector[play.api.libs.json.JsObject], rootUrl: String)
+
+@main("NYU Composers Project Demo Site") {
+  <h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
+  <p>
+  	<b>collection identifier:</b> @summary.resourceId<br/>
+  	<b>collection title:</b>  @summary.resourceTitle<br/>
+  	<b>finding aid location:</b>  @summary.eadLocation<br />
+  	<b>number of digital objects:</b>  @dos.size<br />
+  	<b>scope and content note:</b>  <br/>
+  	@summary.scope<br />
+  	<b>biogrophy or history note:</b>  <br />
+  	@summary.biog
+  </p>
+
+  Digital Objects
+  @for(obj <- dos) {
+  	<li><a href=@(rootUrl + "detail/" + obj.value("component_id").as[String])>@obj.value("title").as[String]</li>
+  }
+}
+
+
+

@@ -1,0 +1,10 @@
+@(detail: Detail)
+
+@main("NYU Composers Project Demo Site") {
+	<h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
+	<h2>@detail.resourceIdentifier @detail.resourceTitle</h2>
+	<a href="@detail.summaryUrl">view all digital objects</a>
+	<p>@detail.title</p><br/>
+	<iframe src="@detail.url" height="315" width="560" allowfullscreen="" frameborder="0"></iframe>
+
+}
