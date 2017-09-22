@@ -12,6 +12,7 @@ import play.api.mvc._
 import play.api.libs.ws._
 import play.api.http.HttpEntity
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -20,9 +21,17 @@ import akka.util.ByteString
 
 case class Summary(version: String, resourceTitle: String, resourceId: String, eadLocation: String, scope: String, biog: String)
 case class Detail(cuid: String, title: String, url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String)
+case class Archiveit(title: String, extent: String, display_url: String)
+
+
 
 @Singleton
 class ComposersController @Inject()(config: Configuration)(cc: ControllerComponents)(ws: WSClient)(implicit ec:ExecutionContext) extends AbstractController(cc) {
+  
+  implicit val archiveitWrites: Writes[Archiveit] = (
+  (JsPath \ "title").write[String] and
+  (JsPath \ "extent").write[String] and
+  (JsPath \ "display_url").write[String])(unlift(Archiveit.unapply))
 
   val aspaceUrl = config.getString("aspaceUrl").get
   val rootUrl = config.getString("rootUrl").get
@@ -54,13 +63,15 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
   		val resourceTitle = json("resource_title").as[String]
   		val summary_url = (rootUrl + "/summary/" + resourceIdentifier)
   		val dao = new Detail(cuid, title, url(0), resourceIdentifier, resourceTitle, summary_url)
-
   		Ok(views.html.detail(dao))
   	}
-  	
   }
 
-  def archiveIt(identifier: String) = Action {
-  	Ok("ARCHIVEIT")
+  def archiveIt(identifier: String) = Action.async {
+  	ws.url(aspaceUrl + "archiveit?resource_id=" + identifier).get().map { response => 
+  		val json = Json.parse(response.body)
+  		val archiveIt = new Archiveit(json("title").as[String], json("extent").as[String], json("display_url").as[String])
+  		Ok(Json.toJson(archiveIt))
+  	}
   }
 }
