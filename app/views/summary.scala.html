@@ -13,10 +13,14 @@
   	@summary.biog
   </p>
 
-  Digital Objects
+  <p>Digital Objects</p>
+  <ul class="list-group">
   @for(obj <- dos) {
-  	<li><a href=@(rootUrl + "detail/" + obj.value("component_id").as[String])>@obj.value("title").as[String]</li>
+  	<li class="list-group-item">
+      <a href=@(rootUrl + "detail/" + obj.value("component_id").as[String])>@obj.value("title").as[String]</a>
+    </li>
   }
+</ul>
 }
 
 

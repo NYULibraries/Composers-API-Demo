@@ -61,7 +61,7 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
   		val url = json("file_uris").as[Vector[String]]
   		val resourceIdentifier = json("resource_identifier").as[String]
   		val resourceTitle = json("resource_title").as[String]
-  		val summary_url = (rootUrl + "/summary/" + resourceIdentifier)
+  		val summary_url = (rootUrl + "summary/" + resourceIdentifier)
   		val dao = new Detail(cuid, title, url(0), resourceIdentifier, resourceTitle, summary_url)
   		Ok(views.html.detail(dao))
   	}
