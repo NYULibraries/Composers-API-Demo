@@ -20,7 +20,8 @@ import akka.stream.scaladsl._
 import akka.util.ByteString
 
 case class Summary(version: String, resourceTitle: String, resourceId: String, eadLocation: String, scope: String, biog: String)
-case class Detail(cuid: String, title: String, url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String)
+case class DetailParent(title: String, biogHist: Vector[String])
+case class Detail(cuid: String, title: String, url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: DetailParent)
 case class Archiveit(title: String, extent: String, display_url: String)
 
 
@@ -38,31 +39,35 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
 
   def summary(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
-	ws.url(aspaceUrl + "summary?resource_id=" + identifier).get().map { response =>
-		val json = Json.parse(response.body)
-		val version = json("version").as[String]
-		val resourceTitle = json("resource_title").as[String]
-		val resourceId = json("resource_identifier").as[String]
-		val eadLocation = json("ead_location").as[String]
-		val scope = json("scopecontent").as[String]
-		val biog = json("bioghist").as[String]
-		val summary = new Summary(version, resourceTitle,resourceId, eadLocation, scope, biog)
-		val dos = json("digital_objects").as[Vector[JsObject]]
-		Ok(views.html.summary(summary, dos, rootUrl))
-	}
+  	ws.url(aspaceUrl + "summary?resource_id=" + identifier).get().map { response =>
+  		val json = Json.parse(response.body)
+  		val version = json("version").as[String]
+  		val resourceTitle = json("resource_title").as[String]
+  		val resourceId = json("resource_identifier").as[String]
+  		val eadLocation = json("ead_location").as[String]
+  		val scope = json("scopecontent").as[String]
+  		val biog = json("bioghist").as[String]
+  		val summary = new Summary(version, resourceTitle,resourceId, eadLocation, scope, biog)
+  		val dos = json("digital_objects").as[Vector[JsObject]]
+  		Ok(views.html.summary(summary, dos, rootUrl))
+  	}
   }
 
   def detail(cuid: String) = Action.async { implicit request: Request[AnyContent] =>
 
   	ws.url(aspaceUrl + "detailed?component_id=" + cuid).get().map { response =>
   		val json = Json.parse(response.body)
-  		val cuid = json("component_id").as[String]
-  		val title = json("title").as[String]
-  		val url = json("file_uris").as[Vector[String]]
-  		val resourceIdentifier = json("resource_identifier").as[String]
-  		val resourceTitle = json("resource_title").as[String]
+      val record = json("ao")
+      val parent = json("parent")
+      val cuid = record("component_id").as[String]
+  		val title = record("title").as[String]
+  		val url = record("file_uris").as[Vector[String]]
+  		val resourceIdentifier = record("resource_identifier").as[String]
+  		val resourceTitle = record("resource_title").as[String]
   		val summary_url = (rootUrl + "summary/" + resourceIdentifier)
-  		val dao = new Detail(cuid, title, url(0), resourceIdentifier, resourceTitle, summary_url)
+      val biogHist = parent("bioghist").as[Vector[String]]
+      val pTitle = parent("title").as[String]
+  		val dao = new Detail(cuid, title, url(0), resourceIdentifier, resourceTitle, summary_url, new DetailParent(pTitle, biogHist))
   		Ok(views.html.detail(dao))
   	}
   }

@@ -6,14 +6,14 @@
   	<b>collection identifier:</b> @summary.resourceId<br/>
   	<b>collection title:</b>  @summary.resourceTitle<br/>
   	<b>finding aid location:</b>  @summary.eadLocation<br />
-  	<b>number of digital objects:</b>  @dos.size<br />
-  	<b>scope and content note:</b>  <br/>
-  	@summary.scope<br />
-  	<b>biogrophy or history note:</b>  <br />
+  	<b>number of digital objects:</b>  @dos.size<br /><br />  	
+    <b>scope and content note:</b>  <br/>
+  	@summary.scope<br /><br />
+  	<b>biography or history note:</b>  <br />
   	@summary.biog
   </p>
 
-  <p>Digital Objects</p>
+  <h4>Digital Objects</h4>
   <ul class="list-group">
   @for(obj <- dos) {
   	<li class="list-group-item">
