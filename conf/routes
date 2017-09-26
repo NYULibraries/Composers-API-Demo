@@ -4,6 +4,7 @@
 # ~~~~
 
 # An example controller showing a sample home page
+GET 	/									controllers.ComposersController.index
 GET     /summary/:resource_identifier       controllers.ComposersController.summary(resource_identifier)
 GET		/detail/:cuid						controllers.ComposersController.detail(cuid)
 GET		/archiveit/:resource_identifier 	controllers.ComposersController.archiveIt(resource_identifier)

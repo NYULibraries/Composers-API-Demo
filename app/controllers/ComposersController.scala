@@ -24,8 +24,6 @@ case class DetailParent(title: String, biogHist: Vector[String])
 case class Detail(cuid: String, title: String, url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: DetailParent)
 case class Archiveit(title: String, extent: String, display_url: String)
 
-
-
 @Singleton
 class ComposersController @Inject()(config: Configuration)(cc: ControllerComponents)(ws: WSClient)(implicit ec:ExecutionContext) extends AbstractController(cc) {
   
@@ -78,5 +76,9 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
   		val archiveIt = new Archiveit(json("title").as[String], json("extent").as[String], json("display_url").as[String])
   		Ok(Json.toJson(archiveIt))
   	}
+  }
+
+  def index() = Action {
+    Ok(views.html.index())
   }
 }
