@@ -32,9 +32,19 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
   (JsPath \ "extent").write[String] and
   (JsPath \ "display_url").write[String])(unlift(Archiveit.unapply))
 
-  val aspaceUrl = config.getString("aspaceUrl").get
-  val rootUrl = config.getString("rootUrl").get
+  val aspaceUrl = config.get[String]("aspaceUrl")
+  val rootUrl = config.get[String]("rootUrl")
 
+  def archiveIt(identifier: String) = Action.async {
+    ws.url(aspaceUrl + "archiveit?resource_id=" + identifier).get().map { response => 
+      val json = Json.parse(response.body)
+      val archiveIt = new Archiveit(json("title").as[String], 
+        json("extent").as[String], 
+        rootUrl + "summary/" + identifier)
+      
+      Ok(Json.toJson(archiveIt))
+    }
+  }
   def summary(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
   	ws.url(aspaceUrl + "summary?resource_id=" + identifier).get().map { response =>
@@ -70,13 +80,7 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
   	}
   }
 
-  def archiveIt(identifier: String) = Action.async {
-  	ws.url(aspaceUrl + "archiveit?resource_id=" + identifier).get().map { response => 
-  		val json = Json.parse(response.body)
-  		val archiveIt = new Archiveit(json("title").as[String], json("extent").as[String], json("display_url").as[String])
-  		Ok(Json.toJson(archiveIt))
-  	}
-  }
+
 
   def index() = Action {
     Ok(views.html.index())
