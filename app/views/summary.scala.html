@@ -1,4 +1,4 @@
-@(summary: Summary, dos: Vector[play.api.libs.json.JsObject], rootUrl: String)
+@(summary: Summary, dos: Map[String, play.api.libs.json.JsObject], rootUrl: String)
 
 @main("NYU Composers Project Demo Site") {
   <h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
@@ -17,7 +17,7 @@
   <ul class="list-group">
   @for(obj <- dos) {
   	<li class="list-group-item">
-      <a href=@(rootUrl + "detail/" + obj.value("component_id").as[String])>@obj.value("title").as[String]</a>
+      <a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>@obj._2.value("title").as[String]</a>
     </li>
   }
 </ul>
