@@ -1,7 +1,7 @@
 package controllers
 
 import javax.inject._
-
+import java.io.ByteArrayInputStream
 
 import scala.concurrent.{ Future, ExecutionContext }
 import scala.concurrent.duration._
@@ -20,6 +20,9 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import akka.util.ByteString
+
+import org.apache.commons.io.IOUtils
+import java.nio.charset.StandardCharsets
 
 case class Summary(version: String, resourceTitle: String, resourceId: String, eadLocation: String, scope: String, biog: String)
 case class DetailParent(title: String, biogHist: Vector[String])
@@ -49,27 +52,12 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
 
   }
 
-
-  def testws() = Action.async { implicit request: Request[AnyContent] =>
-    
-
-      val r = ws.url(aspaceUrl + "summary?resource_id=mss.460")
-      println(r.headers)
-      r.get().map { response => 
-      println(response.headers) 
-      Ok("ok")
-    }
-  }
-
   def summary(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
-  	val request = ws.url(aspaceUrl + "summary?resource_id=" + identifier)
-    request.withHttpHeaders("charset" -> "utf-8")
-
+  	val request = ws.url(aspaceUrl + "summary?resource_id=" + identifier).addHttpHeaders("charset" -> "utf-8")
     var doss = Map[String, JsObject]()
 
     request.get().map { response =>
-
   		val json = Json.parse(response.body)
   		val version = json("version").as[String]
   		val resourceTitle = json("resource_title").as[String]
@@ -80,14 +68,13 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
   		val summary = new Summary(version, resourceTitle,resourceId, eadLocation, scope, biog)
   		val dos = json("digital_objects").as[Vector[JsObject]]
 
-      for(doo <- dos) {
-        doss = doss + ((doo \ "component_id").as[String] -> doo)
+      for(digital_obj <- dos) {
+        doss = doss + ((digital_obj \ "component_id").as[String] -> digital_obj)
       }
 
   		Ok(views.html.summary(summary, ListMap(doss.toSeq.sortWith(_._1 < _._1):_*), rootUrl))
+
   	}
-
-
 
   }
 
@@ -108,6 +95,7 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
   		val dao = new Detail(cuid, title, url(0), resourceIdentifier, resourceTitle, summary_url, new DetailParent(pTitle, biogHist))
   		Ok(views.html.detail(dao))
   	}
+
   }
 
   def index() = Action {
