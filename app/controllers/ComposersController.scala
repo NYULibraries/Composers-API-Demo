@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets
 
 case class Summary(version: String, resourceTitle: String, resourceId: String, eadLocation: String, scope: String, biog: String)
 case class DetailParent(title: String, biogHist: Vector[String])
-case class Detail(cuid: String, title: String, url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: DetailParent)
+case class Detail(cuid: String, title: String, extent: String, url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: DetailParent)
 case class Archiveit(title: String, extent: String, display_url: String)
 
 @Singleton
@@ -82,17 +82,18 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
 
   	ws.url(aspaceUrl + "detailed?component_id=" + cuid).get().map { response =>
   		val json = Json.parse(response.body)
-      val record = json("ao")
-      val parent = json("parent")
-      val cuid = record("component_id").as[String]
-  		val title = record("title").as[String]
-  		val url = record("file_uris").as[Vector[String]]
-  		val resourceIdentifier = record("resource_identifier").as[String]
-  		val resourceTitle = record("resource_title").as[String]
+      val ao = json("archival_object")
+      val parent = json("parent_object")
+      val cuid = ao("component_id").as[String]
+  		val title = ao("title").as[String]
+      val extent = ao("extent").as[String]
+  		val urls = ao("file_uris").as[Vector[String]]
+  		val resourceIdentifier = ao("resource_identifier").as[String]
+  		val resourceTitle = ao("resource_title").as[String]
   		val summary_url = (rootUrl + "summary/" + resourceIdentifier)
-      val biogHist = parent("bioghist").as[Vector[String]]
+      val pBiogHist = parent("bioghist").as[Vector[String]]
       val pTitle = parent("title").as[String]
-  		val dao = new Detail(cuid, title, url(0), resourceIdentifier, resourceTitle, summary_url, new DetailParent(pTitle, biogHist))
+  		val dao = new Detail(cuid, title, extent, urls(0), resourceIdentifier, resourceTitle, summary_url, new DetailParent(pTitle, pBiogHist))
   		Ok(views.html.detail(dao))
   	}
 

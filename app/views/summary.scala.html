@@ -3,13 +3,13 @@
 @main("NYU Composers Project Demo Site") {
   <h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
   <p>
-  	<b>collection identifier:</b> @summary.resourceId<br/>
-  	<b>collection title:</b>  @summary.resourceTitle<br/>
-  	<b>finding aid location:</b>  @summary.eadLocation<br />
-  	<b>number of digital objects:</b>  @dos.size<br /><br />  	
-    <b>scope and content note:</b>  <br/>
+  	<b>Collection identifier:</b> @summary.resourceId<br/>
+  	<b>Collection title:</b>  @summary.resourceTitle<br/>
+  	<b>Finding aid location:</b>  @summary.eadLocation<br />
+  	<b>Number of digital objects:</b>  @dos.size<br /><br />
+    <b>Scope and content note:</b>  <br/>
   	@summary.scope<br /><br />
-  	<b>biography or history note:</b>  <br />
+  	<b>Biography or history note:</b>  <br />
   	@summary.biog
   </p>
 
@@ -17,7 +17,7 @@
   <ul class="list-group">
   @for(obj <- dos) {
   	<li class="list-group-item">
-      <a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>@obj._2.value("title").as[String]</a>
+      <a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>@obj._2.value("title").as[String] (@obj._2.value("date").as[String]) </a>
     </li>
   }
 </ul>
