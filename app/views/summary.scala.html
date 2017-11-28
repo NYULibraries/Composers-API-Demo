@@ -1,5 +1,6 @@
 @(summary: Summary, dos: Map[String, play.api.libs.json.JsObject], rootUrl: String)
-
+@import helpers.EadTagHelper
+@import play.api.libs.json.JsNull
 @main("NYU Composers Project Demo Site") {
   <h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
   <p>
@@ -17,7 +18,8 @@
   <ul class="list-group">
   @for(obj <- dos) {
   	<li class="list-group-item">
-      <a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>@obj._2.value("title").as[String] (@obj._2.value("date").as[String]) </a>
+      <a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>@EadTagHelper.stripEadTags(obj._2.value("title").as[String])</a> (@obj._2.value("date").as[String])
+        @if(obj._2.value("extent") != JsNull){ [@(obj._2.value("extent").as[String])]}
     </li>
   }
 </ul>
