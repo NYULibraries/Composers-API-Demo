@@ -1,7 +1,7 @@
 name := """composers-api"""
 organization := "edu.nyu.dlts"
 
-version := "1.0-SNAPSHOT"
+version := "b0.1"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 

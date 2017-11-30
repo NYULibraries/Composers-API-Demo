@@ -1,0 +1,32 @@
+@(detail: Detail)
+
+@main("NYU Composers Project Demo Site") {
+    <h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
+    <h2>@detail.resourceIdentifier @detail.resourceTitle</h2>
+    <a href="@detail.summaryUrl">view all digital objects in collection</a>
+
+    @detail.parent match {
+    case s: Some[DetailParent] => {
+    <h3>@detail.parent.get.title</h3>
+    <h4>Biographic or Historic Note</h4>
+    @for(note <- detail.parent.get.biogHist) {
+    <p>@note<p>
+        }
+        }
+        case None => { }
+
+        }
+
+        <br/>
+    <h4>@detail.title</h4>
+    @detail.extent<br /><br />
+
+    @for(restriction <- detail.accessRestrictions) {
+        <h4>@restriction</h4>
+    }
+
+    <p>
+        <a href="https://aeon.library.nyu.edu/logon">Please, place a request with Fales Library and Special Collections</a>
+    </p>
+}
+

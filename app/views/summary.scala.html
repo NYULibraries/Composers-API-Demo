@@ -15,13 +15,20 @@
   </p>
 
   <h4>Digital Objects</h4>
-  <ul class="list-group">
-  @for(obj <- dos) {
-  	<li class="list-group-item">
-      <a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>@EadTagHelper.stripEadTags(obj._2.value("title").as[String])</a> (@obj._2.value("date").as[String])
-        @if(obj._2.value("extent") != JsNull){ [@(obj._2.value("extent").as[String])]}
-    </li>
-  }
+  <table class="table">
+      <tr><th>Title</th><th>Date</th><th>Extent</th><th>Restrictions</th></tr>
+      @for(obj <- dos) {
+      <tr>
+          <td>
+            <a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>@EadTagHelper.stripEadTags(obj._2.value("title").as[String])</a>
+          </td>
+          <td>(@obj._2.value("date").as[String])</td>
+          <td>@if(obj._2.value("extent") != JsNull){ [@(obj._2.value("extent").as[String])]}</td>
+          <td>@obj._2.value("restrictions_apply").as[Boolean]</td>
+      </tr>
+      }
+  </table>
+
 </ul>
 }
 
