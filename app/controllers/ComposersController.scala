@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets
 
 case class Summary(version: String, resourceTitle: String, resourceId: String, eadLocation: String, scope: String, biog: String)
 case class DetailParent(title: String, biogHist: Vector[String])
-case class Detail(cuid: String, title: String, extent: String, url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: Option[DetailParent], accessRestrictions: Option[Vector[String]])
+case class Detail(cuid: String, title: String, extent: Option[String], url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: Option[DetailParent], accessRestrictions: Option[Vector[String]])
 case class Archiveit(title: String, extent: String, display_url: String)
 
 @Singleton
@@ -85,7 +85,7 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
       val ao = json("archival_object")
       val cuid = ao("component_id").as[String]
       val title = ao("title").as[String]
-      val extent = ao("extent").as[String]
+      val extent = ao("extent").asOpt[String]
       val urls = ao("file_uris").as[Vector[String]]
       val resourceIdentifier = ao("resource_identifier").as[String]
       val resourceTitle = ao("resource_title").as[String]
