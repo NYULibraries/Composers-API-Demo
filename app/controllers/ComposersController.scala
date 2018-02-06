@@ -97,7 +97,7 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
         case true => {
 
 
-          val aeonUrl = "https://aeon.library.nyu.edu/Logon?Action=10&Form=31&Value=http://dlib.nyu.edu/findingaids/ead/fales/" + resourceIdentifier.replace(".", "_") + ".xml&view=xml"
+          val aeonUrl = "https://aeon.library.nyu.edu/Logon?Action=10&Form=31&Value=http://dlib.nyu.edu/findingaids/ead/fales/" + resourceIdentifier.replace(".", "_").toLowerCase + ".xml&view=xml"
           val accessRestrictions = ao("accessrestrict").as[Vector[String]]
           val dao = new Detail(cuid, title, extent, aeonUrl, resourceIdentifier, resourceTitle, summary_url, getParent(json("parent_object").as[JsValue]), Some(accessRestrictions), None)
           Ok(views.html.restricted(dao))
