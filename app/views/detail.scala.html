@@ -25,6 +25,9 @@
     case None => { }
   }
 <br /><br />
-  <iframe src="@detail.url" height="315" width="560" allowfullscreen="" frameborder="0"></iframe>
+    @detail.isHandle match {
+      case Some(_) => { <iframe src="@detail.url" height="315" width="560" allowfullscreen="" frameborder="0"></iframe>}
+      case None => { <a href="@detail.url">View Archived Website</a>}
+  }
 }
 

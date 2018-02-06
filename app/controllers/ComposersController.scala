@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets
 
 case class Summary(version: String, resourceTitle: String, resourceId: String, eadLocation: String, scope: String, biog: String)
 case class DetailParent(title: String, biogHist: Vector[String])
-case class Detail(cuid: String, title: String, extent: Option[String], url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: Option[DetailParent], accessRestrictions: Option[Vector[String]])
+case class Detail(cuid: String, title: String, extent: Option[String], url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: Option[DetailParent], accessRestrictions: Option[Vector[String]], isHandle: Option[String])
 case class Archiveit(title: String, extent: String, display_url: String)
 
 @Singleton
@@ -90,16 +90,21 @@ class ComposersController @Inject()(config: Configuration)(cc: ControllerCompone
       val resourceIdentifier = ao("resource_identifier").as[String]
       val resourceTitle = ao("resource_title").as[String]
       val summary_url = (rootUrl + "summary/" + resourceIdentifier)
+      val handleRegex = "hdl.handle.net".r
+      val url = handleRegex.findFirstIn(urls(0))
 
       ao("restrictions_apply").as[Boolean] match {
         case true => {
+
+
+          val aeonUrl = "https://aeon.library.nyu.edu/Logon?Action=10&Form=31&Value=http://dlib.nyu.edu/findingaids/ead/fales/" + resourceIdentifier.replace(".", "_") + ".xml&view=xml"
           val accessRestrictions = ao("accessrestrict").as[Vector[String]]
-          val dao = new Detail(cuid, title, extent, urls(0), resourceIdentifier, resourceTitle, summary_url, getParent(json("parent_object").as[JsValue]), Some(accessRestrictions))
+          val dao = new Detail(cuid, title, extent, aeonUrl, resourceIdentifier, resourceTitle, summary_url, getParent(json("parent_object").as[JsValue]), Some(accessRestrictions), None)
           Ok(views.html.restricted(dao))
         }
 
         case false => {
-          val dao = new Detail(cuid, title, extent, urls(0), resourceIdentifier, resourceTitle, summary_url, getParent(json("parent_object").as[JsValue]), None)
+          val dao = new Detail(cuid, title, extent, urls(0), resourceIdentifier, resourceTitle, summary_url, getParent(json("parent_object").as[JsValue]), None, url)
           Ok(views.html.detail(dao))
         }
       }

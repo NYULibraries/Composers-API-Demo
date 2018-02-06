@@ -2,35 +2,44 @@
 @import helpers.EadTagHelper
 @import play.api.libs.json.JsNull
 @main("NYU Composers Project Demo Site") {
-  <h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
-  <p>
-  	<b>Collection identifier:</b> @summary.resourceId<br/>
-  	<b>Collection title:</b>  @summary.resourceTitle<br/>
-  	<b>Finding aid location:</b>  @summary.eadLocation<br />
-  	<b>Number of digital objects:</b>  @dos.size<br /><br />
-    <b>Scope and content note:</b>  <br/>
-  	@summary.scope<br /><br />
-  	<b>Biography or history note:</b>  <br />
-  	@summary.biog
-  </p>
+<h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
+<p>
+    <b>Collection identifier:</b> @summary.resourceId<br/>
+    <b>Collection title:</b>  @summary.resourceTitle<br/>
+    <b>Number of digital objects:</b>  @dos.size<br /><br />
+    <a href=@summary.eadLocation>View full finding aid for collection</a><br /><br />
 
-  <h4>Digital Objects</h4>
-  <table class="table">
-      <tr><th>Title</th><th>Date</th><th>Extent</th><th>Restrictions</th></tr>
-      @for(obj <- dos) {
-      <tr>
-          <td>
+    <b>Scope and content note:</b>  <br/>
+    @summary.scope<br /><br />
+    <b>Biography or history note:</b>  <br />
+    @summary.biog
+</p>
+
+<h4>Digital Objects</h4>
+<table class="table">
+    <tr>
+        <th>Title</th>
+        <th>Date</th>
+        <th>Extent</th>
+        <th>Has Access Restrictions</th>
+    </tr>
+
+    @for(obj <- dos) {
+    <tr>
+        <td>
             <a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>@EadTagHelper.stripEadTags(obj._2.value("title").as[String])</a>
-          </td>
-          <td>@obj._2.value("date").as[String]</td>
-          <td>@if(obj._2.value("extent") != JsNull){ @(obj._2.value("extent").as[String]) }</td>
-          <td>@obj._2.value("restrictions_apply").as[Boolean]</td>
-      </tr>
-      }
-  </table>
+        </td>
+        <td>@obj._2.value("date").as[String]</td>
+        <td>@if(obj._2.value("extent") != JsNull){ @(obj._2.value("extent").as[String]) }</td>
+
+        @if(obj._2.value("restrictions_apply").as[Boolean]) {
+        <td>yes</td>
+        } else {
+        <td>no</td>
+        }
+    </tr>
+    }
+</table>
 
 </ul>
 }
-
-
-
