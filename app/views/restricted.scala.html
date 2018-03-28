@@ -4,7 +4,7 @@
 @main("NYU Composers Project Demo Site") {
   <h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
   <h2>@detail.resourceIdentifier @detail.resourceTitle</h2>
-  <a href="@detail.summaryUrl">view all digital objects in collection</a>
+  <a href="@detail.summaryUrl">Return to Summary View</a>
 
   @detail.parent match {
     case s: Some[DetailParent] => {
@@ -19,17 +19,24 @@
 
   <br/>
   <h4>@EadTagHelper.stripEadTags(detail.title)</h4>
+
   @detail.extent match {
     case Some(_) => { @detail.extent.get}
     case None => { }
   }
 
-  @for(restriction <- detail.accessRestrictions) {
-    <h4>@restriction</h4>
+  <br/>
+  @detail.accessRestrictions match {
+    case Some(_) => {
+      <h4>Conditions Governing Access</h4>
+      @for(restriction <- detail.accessRestrictions) {
+        <p>@restriction</p>
+      }
+      <p><a href="@detail.url">Place a request for onsite access</a></p>
+    }
   }
 
-  <p>
-    <a href="@detail.url">Place a request with Fales Library and Special Collections</a>
-  </p>
+
+
 }
 

@@ -3,11 +3,9 @@
 @import play.api.libs.json.JsNull
 @main("NYU Composers Project Demo Site") {
 <h1>NYU Archive of Contemporary Composers Websites API Demo Site</h1>
-<p>
-    <b>Collection identifier:</b> @summary.resourceId<br/>
-    <b>Collection title:</b>  @summary.resourceTitle<br/>
+<h3>@summary.resourceId : @summary.resourceTitle</h3>
     <b>Number of digital objects:</b>  @dos.size<br /><br />
-    <a href=@summary.eadLocation>View full finding aid for collection</a><br /><br />
+    <a href=@summary.eadLocation>View finding aid for collection</a><br /><br />
 
     <b>Scope and content note:</b>  <br/>
     @summary.scope<br /><br />
@@ -33,9 +31,9 @@
         <td>@if(obj._2.value("extent") != JsNull){ @(obj._2.value("extent").as[String]) }</td>
 
         @if(obj._2.value("restrictions_apply").as[Boolean]) {
-        <td>yes</td>
+        <td>onsite access only</td>
         } else {
-        <td>no</td>
+        <td><a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>streaming access available</a></td>
         }
     </tr>
     }
