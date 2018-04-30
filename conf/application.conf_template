@@ -1,0 +1,14 @@
+aspaceUrl = "http://aspace_instance:8089/plugins/composers/"
+rootUrl = "http://my_domain:8080/"
+
+play.filters.hosts {
+  allowed = ["my_domain", "localhost"]
+}
+
+
+play.filters.headers {
+  contentSecurityPolicy = "child-src http://hdl.handle.net"
+}
+
+
+play.http.secret.key="generate a secret key here."
