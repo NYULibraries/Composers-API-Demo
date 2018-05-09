@@ -7,7 +7,7 @@
 GET 	/									controllers.ComposersController.index
 GET     /summary/:resource_identifier       controllers.ComposersController.summary(resource_identifier)
 GET		/detail/:cuid						controllers.ComposersController.detail(cuid)
-GET		/archiveit/:resource_identifier 	controllers.ComposersController.archiveIt(resource_identifier)
-
+GET		/archiveit/:resource_identifier 	controllers.ComposersController.archiveit(resource_identifier)
+GET		/authenticate						controllers.ComposersController.authenticate
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
