@@ -15,56 +15,64 @@ import play.api.http.HttpEntity
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.i18n.I18nSupport
+import play.api.libs.concurrent.Futures._ 
+import play.api.libs.concurrent.Futures 
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
-import akka.util.ByteString
+import akka.util.{ ByteString, Timeout }
 
-import org.apache.commons.io.IOUtils
-import java.nio.charset.StandardCharsets
-
-import com.fasterxml.jackson.core.JsonParseException
-
-
-  case class Summary(version: String, resourceTitle: String, resourceId: String, eadLocation: String, scope: String, biog: String)
-  case class DetailParent(title: String, biogHist: Vector[String])
-  case class Detail(cuid: String, title: String, extent: Option[String], url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: Option[DetailParent], accessRestrictions: Option[Vector[String]], isHandle: Option[String])
-  case class Archiveit(title: String, extent: String, display_url: String)
+case class Summary(version: String, resourceTitle: String, resourceId: String, eadLocation: String, scope: String, biog: String)
+case class DetailParent(title: String, biogHist: Vector[String])
+case class Detail(cuid: String, title: String, extent: Option[String], url: String, resourceIdentifier: String, resourceTitle: String, summaryUrl: String, parent: Option[DetailParent], accessRestrictions: Option[Vector[String]], isHandle: Option[String])
+case class Archiveit(title: String, extent: String, display_url: String)
 
 @Singleton
 class ComposersController @Inject()
   (config: Configuration)
   (cc: ControllerComponents)
   (ws: WSClient)
-  (implicit ec:ExecutionContext) 
-  extends AbstractController(cc) {
+  (implicit ec:ExecutionContext, implicit val futures: Futures) 
+    extends AbstractController(cc) {
 
   val aspaceUrl = config.get[String]("aspaceUrl")
+  val basePlugin = config.get[String]("basePlugin")
   val rootUrl = config.get[String]("rootUrl")
-
+  
   implicit val archiveitWrites: Writes[Archiveit] = (
     (JsPath \ "title").write[String] and
     (JsPath \ "extent").write[String] and
     (JsPath \ "display_url").write[String])(unlift(Archiveit.unapply))
 
-  def authenticate() = Action.async { implicit request: Request[AnyContent] =>
-    val request = ws.url("http://localhost:8089/users/admin/login").post(Map("password" -> "admin"))
-    request.map { response =>
+  def authenticate(controller: String, identifier: String) = Action.async { implicit request: Request[AnyContent] =>
+
+    val request = ws.url(aspaceUrl + "users/admin/login").post(Map("password" -> "admin"))
+    
+    request.withTimeout(5.seconds).map { response =>
       val json = Json.parse(response.body).asInstanceOf[JsObject]
       json.keys.contains("session") match {
-        case true => Redirect("archiveit/mss.460").withSession("aspace-session" -> json("session").toString)
+        case true => {
+          controller match {
+            case "archiveit" => Redirect("/archiveit/" + identifier).withSession("aspace-session" -> json("session").toString)
+            case "detailed" => Redirect("/detailed/" + identifier).withSession("aspace-session" -> json("session").toString)
+            case "summary" => Redirect("/summary/" + identifier).withSession("aspace-session" -> json("session").toString)
+            case default => Ok("hi")
+          }
+        }
         case false => InternalServerError("Unable to connect to archivesspace")
       }
+    }.recover {
+      case e: scala.concurrent.TimeoutException => InternalServerError("timeout")
     }
   }
 
   def archiveit(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
-    try {
-      request.session.get("aspace-session").map { token => 
-      ws.url(aspaceUrl + "archiveit?resource_id=" + identifier)
+
+    request.session.get("aspace-session").map { token => 
+      ws.url(aspaceUrl + basePlugin + "archiveit?resource_id=" + identifier)
         .addHttpHeaders("X-ArchivesspaceSession" -> token)
-        .get()
+        .get().withTimeout(5.seconds)
         .map { response => 
         
         val json = Json.parse(response.body)
@@ -75,14 +83,8 @@ class ComposersController @Inject()
         Ok(Json.toJson(archiveIt))
       }
     }.getOrElse {
-      Future(Redirect("/authenticate?controller=archiveit&identifier=" + identifier))
+      Future(Redirect("/authenticate/archiveit/" + identifier))
     }
-    
-    } catch  {
-      case jpe: JsonParseException => Future(Ok("java parse exception"))
-      case e: Exception => Future(Ok("exception"))
-
-    }  
   }
 
   def summary(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
@@ -90,7 +92,9 @@ class ComposersController @Inject()
   	val request = ws.url(aspaceUrl + "summary?resource_id=" + identifier).addHttpHeaders("charset" -> "utf-8")
     var doss = Map[String, JsObject]()
 
-    request.get().map { response =>
+    request
+      .get().withTimeout(5.seconds)
+      .map { response =>
   		val json = Json.parse(response.body)
   		val version = json("version").as[String]
   		val resourceTitle = json("resource_title").as[String]
@@ -108,12 +112,13 @@ class ComposersController @Inject()
   		Ok(views.html.summary(summary, ListMap(doss.toSeq.sortWith(_._1 < _._1):_*), rootUrl))
 
   	}
-
   }
 
   def detail(cuid: String) = Action.async { implicit request: Request[AnyContent] =>
 
-    ws.url(aspaceUrl + "detailed?component_id=" + cuid).get().map { response =>
+    ws.url(aspaceUrl + "detailed?component_id=" + cuid)
+      .get().withTimeout(1.seconds)
+      .map { response =>
       val json = Json.parse(response.body)
       val ao = json("archival_object")
       val cuid = ao("component_id").as[String]
