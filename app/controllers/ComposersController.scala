@@ -39,6 +39,8 @@ class ComposersController @Inject()
   val aspaceUrl = config.get[String]("aspaceUrl")
   val basePlugin = config.get[String]("basePlugin")
   val rootUrl = config.get[String]("rootUrl")
+  val repoId = config.get[String]("repoId")
+
   
   implicit val archiveitWrites: Writes[Archiveit] = (
     (JsPath \ "title").write[String] and
@@ -52,16 +54,20 @@ class ComposersController @Inject()
 
   def authenticate(controller: String, identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
-    val request = ws.url(aspaceUrl + "users/admin/login").post(Map("password" -> config.get[String]("adminPass")))
+    val request = ws.url(aspaceUrl + "users/" + config.get[String]("apiUser") +"/login").post(Map("password" -> config.get[String]("apiPass")))
     
     request.withTimeout(5.seconds).map { response =>
+      
       val json = Json.parse(response.body).asInstanceOf[JsObject]
       json.keys.contains("session") match {
         case true => {
+
+          val sessionKey = json("session").as[String].stripLineEnd
+          println("SESSION KEY: " + sessionKey)
           controller match {
-            case "archiveit" => Redirect("/archiveit/" + identifier).withSession("aspace-session" -> json("session").toString)
-            case "detailed" => Redirect("/detailed/" + identifier).withSession("aspace-session" -> json("session").toString)
-            case "summary" => Redirect("/summary/" + identifier).withSession("aspace-session" -> json("session").toString)
+            case "archiveit" => Redirect("/archiveit/" + identifier).withSession("aspace-session" -> sessionKey)
+            case "detailed" => Redirect("/detailed/" + identifier).withSession("aspace-session" -> sessionKey)
+            case "summary" => Redirect("/summary/" + identifier).withSession("aspace-session" -> sessionKey)
             case default => Ok("hi")
           }
         }
@@ -75,11 +81,12 @@ class ComposersController @Inject()
  def archiveit(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
   request.session.get("aspace-session").map { token => 
-      
-      ws.url(aspaceUrl + basePlugin + "archiveit?resource_id=" + identifier)
-        .addHttpHeaders("X-ArchivesspaceSession" -> token)
+
+      ws.url(aspaceUrl + basePlugin + "repositories/"  + repoId + "/archiveit/" + identifier)
+        .addHttpHeaders("X-Archivesspace-Session" -> token)
         .get().withTimeout(5.seconds)
         .map { response => 
+
           response.status match {
             case 200 => {
               val json = Json.parse(response.body)
@@ -91,13 +98,13 @@ class ComposersController @Inject()
 
             case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
             case 403 => Redirect("/authenticate/archiveit/" + identifier)
+            case 412 => Redirect("/authenticate/archiveit/" + identifier)
             case 500 => InternalServerError
             case default => InternalServerError
           }
       }
-    }.getOrElse {
-      Future(Redirect("/authenticate/archiveit/" + identifier))
-    }
+    }.getOrElse(Future(Redirect("/authenticate/archiveit/" + identifier)))
+    
   }
 
 
@@ -107,8 +114,8 @@ class ComposersController @Inject()
   	var doss = Map[String, JsObject]()
 
     request.session.get("aspace-session").map { token =>
-      ws.url(aspaceUrl + basePlugin + "summary?resource_id=" + identifier)
-        .addHttpHeaders("charset" -> "utf-8")
+      ws.url(aspaceUrl + basePlugin + "repositories/"  + repoId + "/summary/" + identifier)
+        .addHttpHeaders("X-Archivesspace-Session" -> token)
         .get().withTimeout(5.seconds)
         .map { response =>
           
@@ -133,6 +140,7 @@ class ComposersController @Inject()
 
             case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
             case 403 => Redirect("/authenticate/summary/" + identifier)
+            case 412 => Redirect("/authenticate/archiveit/" + identifier)
             case 500 => InternalServerError
             case default => InternalServerError
 
@@ -147,8 +155,8 @@ class ComposersController @Inject()
   def detail(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
     request.session.get("aspace-session").map { token =>
-      ws.url(aspaceUrl + basePlugin + "detailed?component_id=" + identifier)
-        .addHttpHeaders("charset" -> "utf-8")
+      ws.url(aspaceUrl + basePlugin + "repositories/"  + repoId + "/detailed/" + identifier)
+        .addHttpHeaders("X-Archivesspace-Session" -> token)
         .get().withTimeout(5.seconds)
         .map { response =>
           
@@ -185,6 +193,7 @@ class ComposersController @Inject()
 
             case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
             case 403 => Redirect("/authenticate/detailed/" + identifier)
+            case 412 => Redirect("/authenticate/archiveit/" + identifier)
             case 500 => InternalServerError
             case default => InternalServerError
 
