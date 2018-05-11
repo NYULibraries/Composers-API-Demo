@@ -52,7 +52,7 @@ class ComposersController @Inject()
 
   def authenticate(controller: String, identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
-    val request = ws.url(aspaceUrl + "users/admin/login").post(Map("password" -> "admin"))
+    val request = ws.url(aspaceUrl + "users/admin/login").post(Map("password" -> config.get[String]("adminPass")))
     
     request.withTimeout(5.seconds).map { response =>
       val json = Json.parse(response.body).asInstanceOf[JsObject]
@@ -90,6 +90,7 @@ class ComposersController @Inject()
             }
 
             case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
+            case 403 => Redirect("/authenticate/archiveit/" + identifier)
             case 500 => InternalServerError
             case default => InternalServerError
           }
@@ -131,6 +132,7 @@ class ComposersController @Inject()
             }
 
             case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
+            case 403 => Redirect("/authenticate/summary/" + identifier)
             case 500 => InternalServerError
             case default => InternalServerError
 
@@ -182,6 +184,7 @@ class ComposersController @Inject()
             }
 
             case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
+            case 403 => Redirect("/authenticate/detailed/" + identifier)
             case 500 => InternalServerError
             case default => InternalServerError
 
