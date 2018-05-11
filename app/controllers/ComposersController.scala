@@ -45,6 +45,11 @@ class ComposersController @Inject()
     (JsPath \ "extent").write[String] and
     (JsPath \ "display_url").write[String])(unlift(Archiveit.unapply))
 
+  
+  def index() = Action {
+    Ok(views.html.index())
+  }
+
   def authenticate(controller: String, identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
     val request = ws.url(aspaceUrl + "users/admin/login").post(Map("password" -> "admin"))
@@ -71,11 +76,10 @@ class ComposersController @Inject()
 
   request.session.get("aspace-session").map { token => 
       
-      val r = ws.url(aspaceUrl + basePlugin + "archiveit?resource_id=" + identifier)
+      ws.url(aspaceUrl + basePlugin + "archiveit?resource_id=" + identifier)
         .addHttpHeaders("X-ArchivesspaceSession" -> token)
         .get().withTimeout(5.seconds)
-      
-      r.map { response => 
+        .map { response => 
           response.status match {
             case 200 => {
               val json = Json.parse(response.body)
@@ -84,7 +88,10 @@ class ComposersController @Inject()
               rootUrl + "summary/" + identifier) 
               Ok(Json.toJson(archiveIt))
             }
-            case default => InternalServerError(Json.toJson(Map("code" -> "500", "message" -> "internal server error")))
+
+            case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
+            case 500 => InternalServerError
+            case default => InternalServerError
           }
       }
     }.getOrElse {
@@ -96,74 +103,101 @@ class ComposersController @Inject()
 
   def summary(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
-  	val request = ws.url(aspaceUrl + "summary?resource_id=" + identifier).addHttpHeaders("charset" -> "utf-8")
-    var doss = Map[String, JsObject]()
+  	var doss = Map[String, JsObject]()
 
-    request
-      .get().withTimeout(5.seconds)
-      .map { response =>
-  		val json = Json.parse(response.body)
-  		val version = json("version").as[String]
-  		val resourceTitle = json("resource_title").as[String]
-  		val resourceId = json("resource_identifier").as[String]
-  		val eadLocation = json("ead_location").as[String]
-  		val scope = json("scopecontent").as[String]
-  		val biog = json("bioghist").as[String]
-  		val summary = new Summary(version, resourceTitle,resourceId, eadLocation, scope, biog)
-  		val dos = json("digital_objects").as[Vector[JsObject]]
+    request.session.get("aspace-session").map { token =>
+      ws.url(aspaceUrl + basePlugin + "summary?resource_id=" + identifier)
+        .addHttpHeaders("charset" -> "utf-8")
+        .get().withTimeout(5.seconds)
+        .map { response =>
+          
+          response.status match {
+            case 200 => {
+          		val json = Json.parse(response.body)
+          		val version = json("version").as[String]
+          		val resourceTitle = json("resource_title").as[String]
+          		val resourceId = json("resource_identifier").as[String]
+          		val eadLocation = json("ead_location").as[String]
+          		val scope = json("scopecontent").as[String]
+          		val biog = json("bioghist").as[String]
+          		val summary = new Summary(version, resourceTitle,resourceId, eadLocation, scope, biog)
+          		val dos = json("digital_objects").as[Vector[JsObject]]
 
-      for(digital_obj <- dos) {
-        doss = doss + ((digital_obj \ "component_id").as[String] -> digital_obj)
-      }
+              for(digital_obj <- dos) {
+                doss = doss + ((digital_obj \ "component_id").as[String] -> digital_obj)
+              }
 
-  		Ok(views.html.summary(summary, ListMap(doss.toSeq.sortWith(_._1 < _._1):_*), rootUrl))
+        		  Ok(views.html.summary(summary, ListMap(doss.toSeq.sortWith(_._1 < _._1):_*), rootUrl))
+            }
 
-  	}
-  }
+            case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
+            case 500 => InternalServerError
+            case default => InternalServerError
 
-  def detail(cuid: String) = Action.async { implicit request: Request[AnyContent] =>
+          }  
+    	}
 
-    ws.url(aspaceUrl + "detailed?component_id=" + cuid)
-      .get().withTimeout(1.seconds)
-      .map { response =>
-      val json = Json.parse(response.body)
-      val ao = json("archival_object")
-      val cuid = ao("component_id").as[String]
-      val title = ao("title").as[String]
-      val extent = ao("extent").asOpt[String]
-      val urls = ao("file_uris").as[Vector[String]]
-      val resourceIdentifier = ao("resource_identifier").as[String]
-      val resourceTitle = ao("resource_title").as[String]
-      val summary_url = (rootUrl + "summary/" + resourceIdentifier)
-      val handleRegex = "hdl.handle.net".r
-      val url = handleRegex.findFirstIn(urls(0))
-
-      ao("restrictions_apply").as[Boolean] match {
-        case true => {
-
-
-          val aeonUrl = "https://aeon.library.nyu.edu/Logon?Action=10&Form=31&Value=http://dlib.nyu.edu/findingaids/ead/fales/" + resourceIdentifier.replace(".", "_").toLowerCase + ".xml&view=xml"
-          val accessRestrictions = ao("accessrestrict").as[Vector[String]]
-          val dao = new Detail(cuid, title, extent, aeonUrl, resourceIdentifier, resourceTitle, summary_url, getParent(json("parent_object").as[JsValue]), Some(accessRestrictions), None)
-          Ok(views.html.restricted(dao))
-        }
-
-        case false => {
-          val dao = new Detail(cuid, title, extent, urls(0), resourceIdentifier, resourceTitle, summary_url, getParent(json("parent_object").as[JsValue]), None, url)
-          Ok(views.html.detail(dao))
-        }
-      }
+    }.getOrElse {
+      Future(Redirect("/authenticate/summary/" + identifier))
     }
   }
 
-  def getParent(jsValue: JsValue): Option[DetailParent] = {
+  def detail(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
+
+    request.session.get("aspace-session").map { token =>
+      ws.url(aspaceUrl + basePlugin + "detailed?component_id=" + identifier)
+        .addHttpHeaders("charset" -> "utf-8")
+        .get().withTimeout(5.seconds)
+        .map { response =>
+          
+          response.status match {
+            case 200 => {
+              val json = Json.parse(response.body)
+              val ao = json("archival_object")
+              val cuid = ao("component_id").as[String]
+              val title = ao("title").as[String]
+              val extent = ao("extent").asOpt[String]
+              val urls = ao("file_uris").as[Vector[String]]
+              val resourceIdentifier = ao("resource_identifier").as[String]
+              val resourceTitle = ao("resource_title").as[String]
+              val summary_url = (rootUrl + "summary/" + resourceIdentifier)
+              val handleRegex = "hdl.handle.net".r
+              val url = handleRegex.findFirstIn(urls(0))
+
+              ao("restrictions_apply").as[Boolean] match {
+                case true => {
+
+
+                  val aeonUrl = "https://aeon.library.nyu.edu/Logon?Action=10&Form=31&Value=http://dlib.nyu.edu/findingaids/ead/fales/" + resourceIdentifier.replace(".", "_").toLowerCase + ".xml&view=xml"
+                  val accessRestrictions = ao("accessrestrict").as[Vector[String]]
+                  val dao = new Detail(cuid, title, extent, aeonUrl, resourceIdentifier, resourceTitle, summary_url, getParent(json("parent_object").as[JsValue]), Some(accessRestrictions), None)
+                  Ok(views.html.restricted(dao))
+                }
+
+                case false => {
+                  val dao = new Detail(cuid, title, extent, urls(0), resourceIdentifier, resourceTitle, summary_url, getParent(json("parent_object").as[JsValue]), None, url)
+                  Ok(views.html.detail(dao))
+                }
+              }
+            }
+
+            case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
+            case 500 => InternalServerError
+            case default => InternalServerError
+
+          }  
+      }
+
+    }.getOrElse {
+      Future(Redirect("/authenticate/detailed/" + identifier))
+    }
+  }
+
+
+    def getParent(jsValue: JsValue): Option[DetailParent] = {
     (jsValue != JsNull) match {
       case true => Some(new DetailParent(jsValue("title").as[String], jsValue("bioghist").as[Vector[String]]))
       case false => None
     }
-  }
-
-  def index() = Action {
-    Ok(views.html.index())
   }
 }
