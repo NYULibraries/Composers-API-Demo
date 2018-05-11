@@ -132,8 +132,8 @@ class ComposersController @Inject()
             }
 
             case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
-            case 403 => Redirect("/authenticate/summary/" + identifier)
-            case 412 => Redirect("/authenticate/archiveit/" + identifier)
+            case 403 => Redirect("/authenticate/" + repo_id + "/summary/" + identifier)
+            case 412 => Redirect("/authenticate/" + repo_id + "/summary/" + identifier)
             case 500 => InternalServerError
             case default => InternalServerError
 
@@ -141,7 +141,7 @@ class ComposersController @Inject()
     	}
 
     }.getOrElse {
-      Future(Redirect("/authenticate/summary/" + identifier))
+      Future(Redirect("/authenticate/" + repo_id + "/summary/" + identifier))
     }
   }
 
@@ -185,8 +185,8 @@ class ComposersController @Inject()
             }
 
             case 400 => NotFound(Json.toJson(Map("error" -> ("Resource not found for identifier: " + identifier))))
-            case 403 => Redirect("/authenticate/detailed/" + identifier)
-            case 412 => Redirect("/authenticate/archiveit/" + identifier)
+            case 403 => Redirect("/authenticate/" + repo_id + "/detailed/" + identifier)
+            case 412 => Redirect("/authenticate/" + repo_id + "/detailed/" + identifier)
             case 500 => InternalServerError
             case default => InternalServerError
 
@@ -194,7 +194,7 @@ class ComposersController @Inject()
       }
 
     }.getOrElse {
-      Future(Redirect("/authenticate/detailed/" + identifier))
+      Future(Redirect("/authenticate/" + repo_id + "/detailed/" + identifier))
     }
   }
 
