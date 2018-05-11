@@ -67,25 +67,32 @@ class ComposersController @Inject()
     }
   }
 
-  def archiveit(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
+ def archiveit(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
-    request.session.get("aspace-session").map { token => 
-      ws.url(aspaceUrl + basePlugin + "archiveit?resource_id=" + identifier)
+  request.session.get("aspace-session").map { token => 
+      
+      val r = ws.url(aspaceUrl + basePlugin + "archiveit?resource_id=" + identifier)
         .addHttpHeaders("X-ArchivesspaceSession" -> token)
         .get().withTimeout(5.seconds)
-        .map { response => 
-        
-        val json = Json.parse(response.body)
-        val archiveIt = new Archiveit(json("title").as[String], 
-          json("extent").as[String], 
-          rootUrl + "summary/" + identifier) 
-        println(token)
-        Ok(Json.toJson(archiveIt))
+      
+      r.map { response => 
+          response.status match {
+            case 200 => {
+              val json = Json.parse(response.body)
+              val archiveIt = new Archiveit(json("title").as[String], 
+              json("extent").as[String], 
+              rootUrl + "summary/" + identifier) 
+              Ok(Json.toJson(archiveIt))
+            }
+            case default => InternalServerError(Json.toJson(Map("code" -> "500", "message" -> "internal server error")))
+          }
       }
     }.getOrElse {
       Future(Redirect("/authenticate/archiveit/" + identifier))
     }
   }
+
+
 
   def summary(identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
