@@ -5,9 +5,10 @@
 
 # An example controller showing a sample home page
 GET 	/									controllers.ComposersController.index
-GET     /summary/:resource_identifier       controllers.ComposersController.summary(resource_identifier)
-GET		/detail/:cuid						controllers.ComposersController.detail(cuid)
-GET		/archiveit/:resource_identifier 	controllers.ComposersController.archiveit(resource_identifier)
-GET		/authenticate/:controller/:identifier 	controllers.ComposersController.authenticate(controller, identifier)
+GET		/authenticate/:repo_id/:controller/:identifier 	controllers.ComposersController.authenticate(repo_id, controller, identifier)
+GET		/archiveit/:repo_id/:resource_id 	controllers.ComposersController.archiveit(repo_id, resource_id)
+GET     /summary/:repo_id/:resource_id       controllers.ComposersController.summary(repo_id, resource_id)
+GET		/detail/:repo_id/:cuid						controllers.ComposersController.detail(repo_id, cuid)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
