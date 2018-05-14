@@ -54,7 +54,7 @@ class ComposersController @Inject()
 
   def authenticate(repo_id: String, controller: String, identifier: String) = Action.async { implicit request: Request[AnyContent] =>
 
-    val request = ws.url(aspaceUrl + "users/" + config.get[String]("apiUser") +"/login").post(Map("password" -> config.get[String]("apiPass")))
+    val request = ws.url(aspaceUrl + "users/" + config.get[String]("apiUser") + "/login").post(Map("password" -> config.get[String]("apiPass")))
     
     request.withTimeout(5.seconds).map { response =>
       
