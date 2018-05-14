@@ -25,7 +25,7 @@
     @for(obj <- dos) {
     <tr>
         <td>
-            <a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>@EadTagHelper.stripEadTags(obj._2.value("title").as[String])</a>
+            <a href=@(rootUrl + "detail/2/" + obj._2.value("component_id").as[String])>@EadTagHelper.stripEadTags(obj._2.value("title").as[String])</a>
         </td>
         <td>@obj._2.value("date").as[String]</td>
         <td>@if(obj._2.value("extent") != JsNull){ @(obj._2.value("extent").as[String]) }</td>
@@ -33,7 +33,7 @@
         @if(obj._2.value("restrictions_apply").as[Boolean]) {
         <td>onsite access only</td>
         } else {
-        <td><a href=@(rootUrl + "detail/" + obj._2.value("component_id").as[String])>streaming access available</a></td>
+        <td><a href=@(rootUrl + "detail/2/" + obj._2.value("component_id").as[String])>streaming access available</a></td>
         }
     </tr>
     }
